@@ -1,0 +1,188 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #071426;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+header {
+    padding: 25px;
+}
+
+header h2 {
+    font-size: 28px;
+}
+
+header span {
+    color: #00d9ff;
+}
+
+header p {
+    color: #8da5bd;
+    font-size: 11px;
+    letter-spacing: 3px;
+    margin-top: 5px;
+}
+
+main {
+    padding: 20px;
+}
+
+.robot {
+    margin: 35px auto 25px;
+    width: 190px;
+}
+
+.antenna {
+    width: 5px;
+    height: 30px;
+    background: #00d9ff;
+    margin: auto;
+    border-radius: 5px;
+}
+
+.face {
+    width: 180px;
+    height: 145px;
+    background: #102d49;
+    border: 4px solid #00d9ff;
+    border-radius: 45px;
+    margin: auto;
+    box-shadow: 0 0 25px #00d9ff55;
+}
+
+.eyes {
+    display: flex;
+    justify-content: space-evenly;
+    padding-top: 40px;
+}
+
+.eye {
+    width: 25px;
+    height: 25px;
+    background: #00eaff;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #00eaff;
+    animation: blink 4s infinite;
+}
+
+.mouth {
+    width: 45px;
+    height: 8px;
+    background: #00eaff;
+    border-radius: 10px;
+    margin: 25px auto;
+}
+
+.neck {
+    width: 35px;
+    height: 20px;
+    background: #00d9ff;
+    margin: auto;
+}
+
+.body {
+    width: 120px;
+    height: 100px;
+    background: #102d49;
+    border: 3px solid #00d9ff;
+    border-radius: 25px;
+    margin: auto;
+    display: grid;
+    place-items: center;
+}
+
+.chest {
+    background: #00d9ff;
+    color: #071426;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+h3 {
+    margin: 20px;
+}
+
+.status {
+    color: #00d9ff;
+    margin-bottom: 20px;
+}
+
+.chat-box {
+    background: #10243b;
+    padding: 15px;
+    border-radius: 15px;
+    min-height: 120px;
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.message {
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.bot {
+    background: #193c58;
+}
+
+.user {
+    background: #075b78;
+    text-align: right;
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+}
+
+input {
+    flex: 1;
+    min-width: 0;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+}
+
+button {
+    border: none;
+    background: #00d9ff;
+    color: #071426;
+    padding: 12px 17px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.voice-btn {
+    margin-top: 15px;
+    width: 100%;
+    padding: 15px;
+}
+
+footer {
+    padding: 25px;
+    color: #7890a9;
+    font-size: 11px;
+}
+
+@keyframes blink {
+    0%, 45%, 50%, 100% {
+        transform: scaleY(1);
+    }
+    47% {
+        transform: scaleY(0.1);
+    }
+  }
