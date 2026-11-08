@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BEEKAY AI ROBOT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h2>BEEKAY <span>AI</span></h2>
+        <p>YOUR PERSONAL AI ROBOT</p>
+    </header>
+
+    <main>
+        <div class="robot">
+            <div class="antenna"></div>
+
+            <div class="face">
+                <div class="eyes">
+                    <div class="eye"></div>
+                    <div class="eye"></div>
+                </div>
+                <div class="mouth"></div>
+            </div>
+
+            <div class="neck"></div>
+            <div class="body">
+                <div class="chest">B</div>
+            </div>
+        </div>
+
+        <h3>Hello! I'm BEEKAY 🤖</h3>
+        <p class="status" id="status">Ready to assist you</p>
+
+        <div class="chat-box" id="chatBox">
+            <div class="message bot">
+                Hello! I'm BEEKAY AI. How can I help you today?
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="text" id="userInput"
+                placeholder="Talk to BEEKAY...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+        <button class="voice-btn" onclick="startListening()">
+            🎤 Talk to me
+        </button>
+    </main>
+
+    <footer>
+        <p>POWERED BY BEEKAY TECH</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+              </html>
