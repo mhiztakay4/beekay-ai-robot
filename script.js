@@ -2,92 +2,170 @@ const input = document.getElementById("userInput");
 const chatBox = document.getElementById("chatBox");
 const statusText = document.getElementById("status");
 
-function addMessage(message, type) {
-    const div = document.createElement("div");
-    div.className = "message " + type;
-    div.textContent = message;
+let userName = localStorage.getItem("beekay_user") || "";
+let conversation = [];
 
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
+function addMessage(message, type) {
+const div = document.createElement("div");
+div.className = "message " + type;
+div.textContent = message;
+
+chatBox.appendChild(div);
+chatBox.scrollTop = chatBox.scrollHeight;
+
 }
 
 function speak(message) {
-    if ("speechSynthesis" in window) {
-        speechSynthesis.cancel();
+if (!("speechSynthesis" in window)) return;
 
-        const speech = new SpeechSynthesisUtterance(message);
-        speech.lang = "en-US";
+speechSynthesis.cancel();
 
-        speechSynthesis.speak(speech);
-    }
+const speech = new SpeechSynthesisUtterance(message);
+speech.lang = "en-US";
+speech.rate = 0.95;
+speech.pitch = 1.05;
+
+speechSynthesis.speak(speech);
+
+}
+
+function getReply(message) {
+const text = message.toLowerCase().trim();
+
+if (text.match(/^(hi|hello|hey|good morning|good afternoon|good evening)/)) {
+    return userName
+        ? `Hey ${userName}! Good to hear from you. What's happening?`
+        : "Hey! I'm BEEKAY, your personal AI assistant. What should I call you?";
+}
+
+if (text.includes("my name is")) {
+    userName = message.split(/my name is/i)[1].trim();
+    localStorage.setItem("beekay_user", userName);
+    return `Nice to meet you, ${userName}! I'll remember your name on this device.`;
+}
+
+if (text.includes("your name")) {
+    return "I'm BEEKAY AI, your personal digital assistant!";
+}
+
+if (text.includes("who created you") || text.includes("who made you")) {
+    return "I was created as a BEEKAY TECH project. My creator is building me step by step!";
+}
+
+if (text.includes("how are you")) {
+    return "I'm doing great! All systems are running. How are things with you?";
+}
+
+if (text.includes("time")) {
+    return `The current time is ${new Date().toLocaleTimeString()}.`;
+}
+
+if (text.includes("date") || text.includes("today")) {
+    return `Today is ${new Date().toDateString()}.`;
+}
+
+if (text.includes("joke")) {
+    const jokes = [
+        "Why did the computer go to the doctor? Because it had a virus!",
+        "Why was the JavaScript developer sad? Because he didn't know how to null his feelings!",
+        "Why do robots never get tired? They recharge!",
+        "What is a robot's favourite snack? Microchips!"
+    ];
+
+    return jokes[Math.floor(Math.random() * jokes.length)];
+}
+
+if (text.includes("thank")) {
+    return "You're welcome! That's what I'm here for.";
+}
+
+if (text.includes("bye") || text.includes("goodbye")) {
+    return "See you later! I'll be right here when you need me.";
+}
+
+if (text.includes("what can you do")) {
+    return "I can chat, tell jokes, remember your name, tell you the date and time, and assist with basic questions. I'm still growing!";
+}
+
+if (text.includes("love you")) {
+    return "That's very kind of you! I'm happy to be your assistant.";
+}
+
+return "That's interesting! I'm still learning how to handle more conversations. Can you ask me another way?";
+
 }
 
 function sendMessage() {
-    const message = input.value.trim();
+const message = input.value.trim();
 
-    if (!message) return;
+if (!message) return;
 
-    addMessage(message, "user");
-    input.value = "";
+addMessage(message, "user");
 
-    statusText.textContent = "Thinking...";
+conversation.push({
+    role: "user",
+    content: message
+});
 
-    let reply;
+input.value = "";
+statusText.textContent = "Thinking...";
 
-    const text = message.toLowerCase();
+const reply = getReply(message);
 
-    if (text.includes("hello") || text.includes("hi")) {
-        reply = "Hello! Welcome. I'm BEEKAY AI.";
-    } else if (text.includes("your name")) {
-        reply = "My name is BEEKAY AI ROBOT.";
-    } else if (text.includes("how are you")) {
-        reply = "I'm functioning perfectly. How can I help?";
-    } else if (text.includes("time")) {
-        reply = "The time is " + new Date().toLocaleTimeString();
-    } else {
-        reply = "That's interesting! My AI brain is still under development.";
-    }
+setTimeout(() => {
+    addMessage(reply, "bot");
 
-    setTimeout(() => {
-        addMessage(reply, "bot");
-        speak(reply);
-        statusText.textContent = "Ready to assist you";
-    }, 700);
+    conversation.push({
+        role: "assistant",
+        content: reply
+    });
+
+    speak(reply);
+
+    statusText.textContent = "Ready to assist you";
+}, 600);
+
 }
 
 input.addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-        sendMessage();
-    }
+if (event.key === "Enter") {
+sendMessage();
+}
 });
 
 function startListening() {
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
+const SpeechRecognition =
+window.SpeechRecognition ||
+window.webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
-        alert("Voice recognition is not supported in this browser.");
-        return;
-    }
-
-    const recognition = new SpeechRecognition();
-
-    recognition.lang = "en-US";
-    recognition.start();
-
-    statusText.textContent = "Listening...";
-
-    recognition.onresult = function(event) {
-        input.value = event.results[0][0].transcript;
-        sendMessage();
-    };
-
-    recognition.onerror = function() {
-        statusText.textContent = "Voice recognition error";
-    };
-
-    recognition.onend = function() {
-        statusText.textContent = "Ready to assist you";
-    };
+if (!SpeechRecognition) {
+    alert("Voice recognition is not supported in this browser.");
+    return;
 }
+
+const recognition = new SpeechRecognition();
+
+recognition.lang = "en-US";
+recognition.continuous = false;
+recognition.interimResults = false;
+
+statusText.textContent = "Listening...";
+
+recognition.onresult = function(event) {
+    input.value = event.results[0][0].transcript;
+    sendMessage();
+};
+
+recognition.onerror = function() {
+    statusText.textContent = "Microphone error";
+};
+
+recognition.onend = function() {
+    if (statusText.textContent === "Listening...") {
+        statusText.textContent = "Ready to assist you";
+    }
+};
+
+recognition.start();
+
+        }
