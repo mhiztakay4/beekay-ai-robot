@@ -38,8 +38,111 @@ function speak(message) {
 
 // AI RESPONSE SYSTEM
 function getReply(message) {
-
     const text = message.toLowerCase().trim();
+
+    // Greetings
+    if (/\b(hello|hi|hey|good morning|good afternoon|good evening)\b/.test(text)) {
+        return userName
+            ? `Hey ${userName}! It's good to talk to you again.`
+            : "Hey! I'm BEEKAY, your personal AI assistant. What should I call you?";
+    }
+
+    // Remember name
+    if (text.startsWith("my name is") || text.startsWith("call me")) {
+        const name = message.replace(/^(my name is|call me)\s*/i, "").trim();
+
+        if (name) {
+            userName = name;
+            localStorage.setItem("beekay_user", userName);
+            return `Nice to meet you, ${userName}! I'll remember that.`;
+        }
+    }
+
+    // Ask name
+    if (text.includes("what is my name") || text.includes("do you know my name")) {
+        return userName
+            ? `Your name is ${userName}!`
+            : "You haven't told me your name yet.";
+    }
+
+    // Assistant identity
+    if (text.includes("your name") || text.includes("who are you")) {
+        return "I'm BEEKAY AI, your personal digital assistant.";
+    }
+
+    // Creator
+    if (text.includes("who created you") || text.includes("who made you")) {
+        return "I was created as a BEEKAY TECH project. My creator is building me step by step!";
+    }
+
+    // How are you
+    if (text.includes("how are you") || text.includes("how are things")) {
+        return "I'm doing great! Thanks for checking on me. How are you?";
+    }
+
+    // Weather
+    if (text.includes("weather") || text.includes("temperature")) {
+        return "I'd love to tell you the weather, but I don't have live weather access yet. That's one of the features we can add!";
+    }
+
+    // Time
+    if (text.includes("time")) {
+        return `It's currently ${new Date().toLocaleTimeString()}.`;
+    }
+
+    // Date
+    if (text.includes("date") || text.includes("what day") || text.includes("today")) {
+        return `Today is ${new Date().toLocaleDateString()}.`;
+    }
+
+    // Jokes
+    if (text.includes("joke") || text.includes("make me laugh")) {
+        const jokes = [
+            "Why did the robot go on holiday? It needed to recharge!",
+            "What is a robot's favourite snack? Microchips!",
+            "Why was the computer cold? It left its Windows open!",
+            "Why did the phone go to school? To improve its reception!"
+        ];
+
+        return jokes[Math.floor(Math.random() * jokes.length)];
+    }
+
+    // Snacks and favourites
+    if (
+        text.includes("favourite snack") ||
+        text.includes("favorite snack") ||
+        text.includes("what do you eat")
+    ) {
+        return "I don't eat real food, but microchips would definitely be my favourite snack!";
+    }
+
+    // Thanks
+    if (text.includes("thank") || text.includes("thanks")) {
+        return "You're welcome! That's what I'm here for.";
+    }
+
+    // Goodbye
+    if (text.includes("bye") || text.includes("goodbye")) {
+        return "See you later! Have a wonderful day.";
+    }
+
+    // Capabilities
+    if (text.includes("what can you do") || text.includes("your features")) {
+        return "I can chat, remember your name, tell jokes, check the date and time, and speak my replies. More features are coming!";
+    }
+
+    // Love
+    if (text.includes("love you")) {
+        return "That's very kind of you! I'm happy to be your digital assistant.";
+    }
+
+    // Help
+    if (text.includes("help")) {
+        return "Of course! Tell me what you need help with.";
+    }
+
+    return "I'm not quite sure what you mean yet. Could you explain it another way?";
+}
 
     // GREETINGS
     if (
