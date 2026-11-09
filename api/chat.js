@@ -10,14 +10,14 @@ export default async function handler(req, res) {
 
     if (!apiKey || !model) {
         return res.status(503).json({
-            error: "BEEKAY AI is not connected to an AI model yet."
+            error: "AI configuration is missing."
         });
     }
 
     try {
         const { messages } = req.body || {};
 
-        if (!Array.isArray(messages) || messages.length === 0) {
+        if (!Array.isArray(messages) || !messages.length) {
             return res.status(400).json({
                 error: "Please send a message."
             });
@@ -48,32 +48,45 @@ export default async function handler(req, res) {
                     messages: [
                         {
                             role: "system",
-                            content: "You are BEEKAY AI, a friendly, helpful digital assistant created as a BEEKAY TECH project. Speak naturally, clearly and respectfully."
+                            content: "You are BEEKAY AI, a friendly, helpful digital assistant created by BEEKAY TECH. Speak naturally, clearly and respectfully."
                         },
                         ...safeMessages
                     ],
+                    stream: true,
                     max_tokens: 500
                 })
             }
         );
 
-        const data = await response.json();
-
-        if (!response.ok) {
+        if (!response.ok || !response.body) {
             return res.status(502).json({
                 error: "The AI service could not complete the request."
             });
         }
 
-        const reply = data.choices?.[0]?.message?.content;
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache, no-transform");
+        res.setHeader("Connection", "keep-alive");
 
-        return res.status(200).json({
-            reply: reply || "I couldn't generate a response."
-        });
+        const reader = response.body.getReader();
+
+        while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) break;
+
+            res.write(value);
+        }
+
+        return res.end();
 
     } catch (error) {
-        return res.status(500).json({
-            error: "Something went wrong. Please try again."
-        });
+        if (!res.headersSent) {
+            return res.status(500).json({
+                error: "Something went wrong."
+            });
+        }
+
+        return res.end();
     }
 }
