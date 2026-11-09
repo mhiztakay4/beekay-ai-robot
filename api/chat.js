@@ -8,11 +8,17 @@ export default async function handler(req, res) {
     const apiKey = process.env.AI_GATEWAY_API_KEY;
     const model = process.env.AI_MODEL;
 
-    if (!apiKey || !model) {
-        return res.status(503).json({
-            error: "AI configuration is missing."
-        });
-    }
+if (!apiKey) {
+    return res.status(503).json({
+        error: "AI_GATEWAY_API_KEY is missing."
+    });
+}
+
+if (!model) {
+    return res.status(503).json({
+        error: "AI_MODEL is missing."
+    });
+}
 
     try {
         const { messages } = req.body || {};
