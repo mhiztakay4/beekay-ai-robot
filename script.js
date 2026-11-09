@@ -1,6 +1,7 @@
 // ========================================
-// BEEKAY AI 2.0
+// BEEKAY AI 3.0
 // BEEKAY TECH
+// Powered by Vercel AI Gateway
 // ========================================
 
 
@@ -13,6 +14,7 @@ const statusText = document.getElementById("status");
 // MEMORY
 let userName = localStorage.getItem("beekay_user") || "";
 let conversation = [];
+let isThinking = false;
 
 
 // ========================================
@@ -27,6 +29,8 @@ function addMessage(message, type) {
 
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
+
+    return div;
 }
 
 
@@ -51,37 +55,12 @@ function speak(message) {
 
 
 // ========================================
-// HELPER FUNCTIONS
+// LOCAL MEMORY
 // ========================================
 
-function randomReply(replies) {
-    return replies[Math.floor(Math.random() * replies.length)];
-}
-
-
-// ========================================
-// BEEKAY AI BRAIN
-// ========================================
-
-function getReply(message) {
+function getLocalReply(message) {
 
     const text = message.toLowerCase().trim();
-
-
-    // EMPTY MESSAGE
-    if (!text) {
-        return "I'm listening. What would you like to say?";
-    }
-
-
-    // GREETINGS
-    if (/\b(hello|hi|hey|good morning|good afternoon|good evening)\b/.test(text)) {
-
-        return userName
-            ? `Hey ${userName}! It's good to talk to you again.`
-            : "Hey! I'm BEEKAY, your personal AI assistant. What should I call you?";
-    }
-
 
     // REMEMBER NAME
     if (
@@ -104,8 +83,7 @@ function getReply(message) {
         }
     }
 
-
-    // ASK USER NAME
+    // ASK NAME
     if (
         text.includes("what is my name") ||
         text.includes("do you know my name")
@@ -116,8 +94,7 @@ function getReply(message) {
             : "You haven't told me your name yet.";
     }
 
-
-    // CHANGE NAME
+    // FORGET NAME
     if (text.includes("forget my name")) {
 
         userName = "";
@@ -127,217 +104,152 @@ function getReply(message) {
         return "Okay! I've cleared the name stored in this browser.";
     }
 
+    return null;
+}
 
-    // ASSISTANT IDENTITY
-    if (
-        text.includes("your name") ||
-        text.includes("who are you")
-    ) {
 
-        return "I'm BEEKAY AI, your personal digital assistant, built under BEEKAY TECH.";
+// ========================================
+// STREAM AI RESPONSE
+// ========================================
+
+async function getAIResponse(message, botMessage) {
+
+    conversation.push({
+        role: "user",
+        content: message
+    });
+
+    try {
+
+        statusText.textContent = "BEEKAY is thinking...";
+
+        const response = await fetch("/api/chat", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                messages: conversation.slice(-12)
+            })
+
+        });
+
+
+        if (!response.ok) {
+
+            const errorData = await response.json().catch(() => ({}));
+
+            throw new Error(
+                errorData.error || "Unable to connect to BEEKAY AI."
+            );
+        }
+
+
+        if (!response.body) {
+
+            throw new Error("Streaming is not supported.");
+        }
+
+
+        const reader = response.body.getReader();
+
+        const decoder = new TextDecoder();
+
+        let buffer = "";
+        let fullReply = "";
+        let finished = false;
+
+
+        while (!finished) {
+
+            const { done, value } = await reader.read();
+
+            if (done) break;
+
+            buffer += decoder.decode(value, {
+                stream: true
+            });
+
+            const lines = buffer.split("\n");
+
+            buffer = lines.pop() || "";
+
+
+            for (const line of lines) {
+
+                const trimmed = line.trim();
+
+                if (!trimmed.startsWith("data:")) continue;
+
+                const data = trimmed.slice(5).trim();
+
+                if (data === "[DONE]") {
+
+                    finished = true;
+                    break;
+
+                }
+
+
+                try {
+
+                    const parsed = JSON.parse(data);
+
+                    const content =
+                        parsed.choices?.[0]?.delta?.content;
+
+                    if (typeof content === "string") {
+
+                        fullReply += content;
+
+                        botMessage.textContent = fullReply;
+
+                        chatBox.scrollTop = chatBox.scrollHeight;
+
+                    }
+
+                } catch (error) {
+
+                    console.warn("Stream chunk could not be parsed.");
+
+                }
+
+            }
+
+        }
+
+
+        if (!fullReply.trim()) {
+
+            throw new Error("BEEKAY could not generate a response.");
+        }
+
+
+        conversation.push({
+            role: "assistant",
+            content: fullReply
+        });
+
+
+        statusText.textContent = "Ready.";
+
+        speak(fullReply);
+
+
+    } catch (error) {
+
+        console.error("BEEKAY AI Error:", error);
+
+        botMessage.textContent =
+            "Sorry, I couldn't connect to my AI brain. Please try again.";
+
+        statusText.textContent = "Connection error.";
+
     }
 
-
-    // CREATOR
-    if (
-        text.includes("who created you") ||
-        text.includes("who made you") ||
-        text.includes("your creator")
-    ) {
-
-        return "I was created as a BEEKAY TECH project. My creator is building me step by step!";
-    }
-
-
-    // HOW ARE YOU
-    if (
-        text.includes("how are you") ||
-        text.includes("how are things")
-    ) {
-
-        return randomReply([
-            "I'm doing great! Thanks for checking on me. How are you?",
-            "I'm functioning perfectly and ready to chat!",
-            "I'm good! What are we talking about today?"
-        ]);
-    }
-
-
-    // WEATHER
-    if (
-        text.includes("weather") ||
-        text.includes("temperature") ||
-        text.includes("forecast")
-    ) {
-
-        return "I'd love to tell you the weather, but I don't have live weather access yet. That's a feature we can add later!";
-    }
-
-
-    // TIME
-    if (
-        text.includes("time") ||
-        text.includes("what time is it")
-    ) {
-
-        return "It's currently " +
-            new Date().toLocaleTimeString();
-    }
-
-
-    // DATE
-    if (
-        text.includes("date") ||
-        text.includes("what day") ||
-        text.includes("today")
-    ) {
-
-        return "Today is " +
-            new Date().toLocaleDateString();
-    }
-
-
-    // JOKES
-    if (
-        text.includes("joke") ||
-        text.includes("make me laugh") ||
-        text.includes("funny")
-    ) {
-
-        const jokes = [
-
-            "Why did the robot go on holiday? It needed to recharge!",
-
-            "What is a robot's favourite snack? Microchips!",
-
-            "Why was the computer cold? It left its Windows open!",
-
-            "Why did the phone go to school? To improve its reception!",
-
-            "What do you call a robot that takes the long way around? R2-Detour!",
-
-            "Why did the computer visit the doctor? It had a virus!"
-
-        ];
-
-        return randomReply(jokes);
-    }
-
-
-    // FAVOURITE SNACK
-    if (
-        text.includes("favourite snack") ||
-        text.includes("favorite snack") ||
-        text.includes("what do you eat")
-    ) {
-
-        return "I don't eat real food, but microchips would definitely be my favourite snack!";
-    }
-
-
-    // MUSIC
-    if (
-        text.includes("music") ||
-        text.includes("song")
-    ) {
-
-        return "I enjoy the idea of music! What kind of music do you like?";
-    }
-
-
-    // THANK YOU
-    if (
-        text.includes("thank") ||
-        text.includes("thanks")
-    ) {
-
-        return randomReply([
-            "You're welcome! That's what I'm here for.",
-            "Anytime! Happy to help.",
-            "You're welcome! What else is on your mind?"
-        ]);
-    }
-
-
-    // GOODBYE
-    if (
-        text.includes("bye") ||
-        text.includes("goodbye") ||
-        text.includes("see you later")
-    ) {
-
-        return "See you later! Have a wonderful day.";
-    }
-
-
-    // CAPABILITIES
-    if (
-        text.includes("what can you do") ||
-        text.includes("your features")
-    ) {
-
-        return "I can chat with you, remember your name, tell jokes, check the date and time, and speak my replies. More features are coming!";
-    }
-
-
-    // HOW OLD ARE YOU
-    if (text.includes("how old are you")) {
-
-        return "I'm a digital assistant, so I don't have a human age. I'm growing through development!";
-    }
-
-
-    // LOVE
-    if (text.includes("love you")) {
-
-        return "That's very kind of you! I'm happy to be your digital assistant.";
-    }
-
-
-    // HELP
-    if (
-        text.includes("help") ||
-        text.includes("assist me")
-    ) {
-
-        return "Of course! Tell me what you need help with, and I'll do my best.";
-    }
-
-
-    // WHAT ARE YOU DOING
-    if (
-        text.includes("what are you doing") ||
-        text.includes("are you busy")
-    ) {
-
-        return "I'm right here, ready to chat with you!";
-    }
-
-
-    // COMPLIMENTS
-    if (
-        text.includes("you are smart") ||
-        text.includes("you are intelligent")
-    ) {
-
-        return "Thank you! My creator is working hard to make me smarter.";
-    }
-
-
-    // DEFAULT RESPONSE
-    return randomReply([
-
-        "That's interesting! Tell me more.",
-
-        "I want to understand you better. Can you explain that?",
-
-        "Hmm, that's something new for me. Say a little more.",
-
-        "I'm listening. What happened next?",
-
-        "Interesting! Let's talk more about that."
-
-    ]);
 }
 
 
@@ -345,35 +257,64 @@ function getReply(message) {
 // SEND MESSAGE
 // ========================================
 
-function sendMessage() {
+async function sendMessage() {
+
+    if (isThinking) return;
 
     const message = input.value.trim();
 
-    if (message === "") return;
+    if (!message) return;
+
 
     addMessage(message, "user");
 
-    conversation.push({
-        role: "user",
-        content: message
-    });
-
     input.value = "";
 
-    const reply = getReply(message);
+    isThinking = true;
 
-    setTimeout(function() {
 
-        addMessage(reply, "bot");
+    // LOCAL MEMORY COMMANDS
+    const localReply = getLocalReply(message);
+
+    if (localReply) {
+
+        const botMessage = addMessage("", "bot");
+
+        botMessage.textContent = localReply;
+
+        conversation.push({
+            role: "user",
+            content: message
+        });
 
         conversation.push({
             role: "assistant",
-            content: reply
+            content: localReply
         });
 
-        speak(reply);
+        speak(localReply);
 
-    }, 500);
+        statusText.textContent = "Ready.";
+
+        isThinking = false;
+
+        return;
+    }
+
+
+    // AI RESPONSE
+    const botMessage = addMessage("", "bot");
+
+    try {
+
+        await getAIResponse(message, botMessage);
+
+    } finally {
+
+        isThinking = false;
+
+    }
+
 }
 
 
@@ -402,6 +343,7 @@ function startListening() {
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
 
+
     if (!SpeechRecognition) {
 
         statusText.textContent =
@@ -409,6 +351,10 @@ function startListening() {
 
         return;
     }
+
+
+    if (isThinking) return;
+
 
     const recognition = new SpeechRecognition();
 
